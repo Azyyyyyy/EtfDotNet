@@ -9,7 +9,7 @@ public class SmallBigContainerTests
     [Fact]
     public void EtfToSmallBigPositiveTest()
     {
-        using var container = EtfDecoder.DecodeType(EtfMemory.FromArray(new byte[]{(byte) EtfConstants.SmallBigExt, 1, 0, 129}));
+        using EtfContainer container = EtfDecoder.DecodeType(EtfMemory.FromArray(new byte[]{(byte) EtfConstants.SmallBigExt, 1, 0, 129}));
         Assert.Equal(EtfConstants.SmallBigExt, container.Type);
         Assert.Equal(new BigInteger(129), (BigInteger) container);
     }
@@ -17,7 +17,7 @@ public class SmallBigContainerTests
     [Fact]
     public void EtfToSmallBigNegativeTest()
     {
-        using var container = EtfDecoder.DecodeType(EtfMemory.FromArray(new byte[]{(byte) EtfConstants.SmallBigExt, 1, 1, 129}));
+        using EtfContainer container = EtfDecoder.DecodeType(EtfMemory.FromArray(new byte[]{(byte) EtfConstants.SmallBigExt, 1, 1, 129}));
         Assert.Equal(EtfConstants.SmallBigExt, container.Type);
         Assert.Equal(new BigInteger(-129), (BigInteger) container);
     }
@@ -25,7 +25,7 @@ public class SmallBigContainerTests
     [Fact]
     public void EtfToSmallBigPositiveMultiByteTest()
     {
-        using var container = EtfDecoder.DecodeType(EtfMemory.FromArray(new byte[]{(byte) EtfConstants.SmallBigExt, 3, 0, 129, 16, 1}));
+        using EtfContainer container = EtfDecoder.DecodeType(EtfMemory.FromArray(new byte[]{(byte) EtfConstants.SmallBigExt, 3, 0, 129, 16, 1}));
         Assert.Equal(EtfConstants.SmallBigExt, container.Type);
         Assert.Equal(new BigInteger(69761), (BigInteger) container);
     }
@@ -33,7 +33,7 @@ public class SmallBigContainerTests
     [Fact]
     public void EtfToSmallBigNegativeMultiByteTest()
     {
-        using var container = EtfDecoder.DecodeType(EtfMemory.FromArray(new byte[]{(byte) EtfConstants.SmallBigExt, 3, 1, 129, 16, 1}));
+        using EtfContainer container = EtfDecoder.DecodeType(EtfMemory.FromArray(new byte[]{(byte) EtfConstants.SmallBigExt, 3, 1, 129, 16, 1}));
         Assert.Equal(EtfConstants.SmallBigExt, container.Type);
         Assert.Equal(new BigInteger(-69761), (BigInteger) container);
     }

@@ -20,7 +20,7 @@ public class HeaderTests
     [Fact]
     public void PackVersionTest()
     {
-        var arr = EtfFormat.Pack(EtfContainer.Nil);
+        byte[] arr = EtfFormat.Pack(EtfContainer.Nil);
         Assert.Equal((byte) EtfConstants.VersionNumber, arr[0]);
     }
 }

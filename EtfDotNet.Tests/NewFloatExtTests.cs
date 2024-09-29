@@ -8,7 +8,7 @@ public class NewFloatExtTests
     [Fact]
     public void EtfToDoubleTest()
     {
-        using var atom = EtfDecoder.DecodeType(EtfMemory.FromArray(new byte[]{(byte) EtfConstants.NewFloatExt, 0x40, 0x59, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}));
+        using EtfContainer atom = EtfDecoder.DecodeType(EtfMemory.FromArray(new byte[]{(byte) EtfConstants.NewFloatExt, 0x40, 0x59, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}));
         Assert.Equal(EtfConstants.NewFloatExt, atom.Type);
         Assert.Equal(100d, (double) atom);
     }

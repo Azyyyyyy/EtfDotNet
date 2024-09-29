@@ -23,18 +23,18 @@ public class TupleContainerTests
     [Fact]
     public void EtfToTupleEmptyTest()
     {
-        using var atom = EtfDecoder.DecodeType(EtfMemory.FromArray(new byte[]{(byte) EtfConstants.SmallTupleExt, 0x00}));
+        using EtfContainer atom = EtfDecoder.DecodeType(EtfMemory.FromArray(new byte[]{(byte) EtfConstants.SmallTupleExt, 0x00}));
         Assert.Equal(EtfConstants.SmallTupleExt, atom.Type);
-        var tuple = atom.AsTuple();
+        EtfTuple tuple = atom.AsTuple();
         Assert.Empty(tuple);
     }
     
     [Fact]
     public void EtfToTupleOneTest()
     {
-        using var atom = EtfDecoder.DecodeType(EtfMemory.FromArray(new byte[]{(byte) EtfConstants.SmallTupleExt, 0x01, (byte) EtfConstants.NilExt}));
+        using EtfContainer atom = EtfDecoder.DecodeType(EtfMemory.FromArray(new byte[]{(byte) EtfConstants.SmallTupleExt, 0x01, (byte) EtfConstants.NilExt}));
         Assert.Equal(EtfConstants.SmallTupleExt, atom.Type);
-        var tuple = atom.AsTuple();
+        EtfTuple tuple = atom.AsTuple();
         Assert.Single(tuple);
         Assert.Equal(EtfConstants.NilExt, tuple[0].Type);
     }
@@ -42,9 +42,9 @@ public class TupleContainerTests
     [Fact]
     public void EtfToTupleLargeOneTest()
     {
-        using var atom = EtfDecoder.DecodeType(EtfMemory.FromArray(new byte[]{(byte) EtfConstants.LargeTupleExt, 0x00, 0x00, 0x00, 0x01, (byte) EtfConstants.NilExt}));
+        using EtfContainer atom = EtfDecoder.DecodeType(EtfMemory.FromArray(new byte[]{(byte) EtfConstants.LargeTupleExt, 0x00, 0x00, 0x00, 0x01, (byte) EtfConstants.NilExt}));
         Assert.Equal(EtfConstants.LargeTupleExt, atom.Type);
-        var tuple = atom.AsTuple();
+        EtfTuple tuple = atom.AsTuple();
         Assert.Single(tuple);
         Assert.Equal(EtfConstants.NilExt, tuple[0].Type);
     }

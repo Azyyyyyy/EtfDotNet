@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net8.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        
+        <PackageId>EpicPix.EtfDotNet</PackageId>
+        <Version>2.0.0</Version>
+        <Authors>EpicPix</Authors>
+        <PackageTags>etf</PackageTags>
+        <Description>
+            This package adds support for Erlang External Term Format
+        </Description>
+        <PackageLicenseExpression>MIT</PackageLicenseExpression>
+        <RepositoryUrl>https://github.com/EpicPix/EtfDotNet/</RepositoryUrl>
+        <IsAotCompatible>true</IsAotCompatible>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <PackageReference Include="UniversalTypeConverter" Version="2.7.1" />
+    </ItemGroup>
+</Project>

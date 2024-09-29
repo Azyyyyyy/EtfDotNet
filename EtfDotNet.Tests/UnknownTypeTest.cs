@@ -5,7 +5,7 @@ namespace EtfDotNet.Tests;
 
 public class UnknownTypeTest
 {
-    private readonly EtfContainer UnknownType = EtfContainer.AsContainer(ArraySegment<byte>.Empty, (EtfConstants) 255);
+    private readonly EtfContainer _unknownType = EtfContainer.AsContainer(ArraySegment<byte>.Empty, (EtfConstants) 255);
     
     [Fact]
     public void UnpackInvalidTypeTest()
@@ -16,19 +16,19 @@ public class UnknownTypeTest
     [Fact]
     public void PackUnknownTypeTest()
     {
-        Assert.Throws<EtfException>(() => EtfFormat.Pack(UnknownType));
+        Assert.Throws<EtfException>(() => EtfFormat.Pack(_unknownType));
     }
     
     [Fact]
     public void EncodeUnknownTypeTest()
     {
-        Assert.Throws<EtfException>(() => EtfEncoder.EncodeType(UnknownType, EtfMemory.FromArray(new byte[8])));
+        Assert.Throws<EtfException>(() => EtfEncoder.EncodeType(_unknownType, EtfMemory.FromArray(new byte[8])));
     }
     
     [Fact]
     public void GetLengthOfUnknownTypeTest()
     {
-        Assert.Throws<EtfException>(() => EtfFormat.GetPackedSize(UnknownType));
+        Assert.Throws<EtfException>(() => EtfFormat.GetPackedSize(_unknownType));
     }
     
 }

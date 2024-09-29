@@ -9,7 +9,7 @@ public class AtomContainerTests
     [Fact]
     public void EtfToAtomTest()
     {
-        using var atom = EtfDecoder.DecodeType(EtfMemory.FromArray(new byte[]{(byte) EtfConstants.AtomExt, 0, 4, (byte) 't', (byte) 'e', (byte) 's', (byte) 't'}));
+        using EtfContainer atom = EtfDecoder.DecodeType(EtfMemory.FromArray(new byte[]{(byte) EtfConstants.AtomExt, 0, 4, (byte) 't', (byte) 'e', (byte) 's', (byte) 't'}));
         Assert.Equal(EtfConstants.AtomExt, atom.Type);
         Assert.Equal("test", atom.ToAtom());
     }
@@ -17,7 +17,7 @@ public class AtomContainerTests
     [Fact]
     public void AtomToEtfTest()
     {
-        using var atom = EtfContainer.FromAtom("test");
+        using EtfContainer atom = EtfContainer.FromAtom("test");
         Assert.Equal(EtfConstants.AtomExt, atom.Type);
         Assert.Equal("test", atom.ToAtom());
         Assert.Equal(7, EtfEncoder.CalculateTypeSize(atom));
@@ -67,7 +67,7 @@ public class AtomContainerTests
         Assert.Null(got);
         Assert.Throws<InvalidCastException>(() =>
         {
-            bool got = val;
+            bool unused = val;
         });
     }
 }

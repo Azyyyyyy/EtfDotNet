@@ -1,16 +1,13 @@
-﻿using BenchmarkDotNet.Attributes;
-using BenchmarkDotNet.Running;
-using EtfDotNet.Benchmarks;
+﻿using EtfDotNet.Extensions;
 using EtfDotNet.Types;
 
-BenchmarkRunner.Run<EtfBenchmark>();
+namespace EtfDotNet.Example;
 
-namespace EtfDotNet.Benchmarks
+public class ThirdExample
 {
-    [MemoryDiagnoser]
-    public class EtfBenchmark
+    public static void RunExample()
     {
-        private readonly byte[] _data =
+        byte[] data =
         [
             131, 116, 0, 0, 0, 4, 100, 0, 1, 100, 116, 0, 0, 0, 18, 109, 0, 0, 0, 11, 97, 116, 116, 97, 99, 104,
             109, 101, 110, 116, 115, 106, 109, 0, 0, 0, 6, 97, 117, 116, 104, 111, 114, 116, 0, 0, 0, 6, 109, 0, 0,
@@ -38,29 +35,28 @@ namespace EtfDotNet.Benchmarks
             109, 0, 0, 0, 4, 116, 121, 112, 101, 97, 0, 100, 0, 2, 111, 112, 97, 0, 100, 0, 1, 115, 97, 6, 100, 0,
             1, 116, 100, 0, 14, 77, 69, 83, 83, 65, 71, 69, 95, 67, 82, 69, 65, 84, 69
         ];
+        EtfContainer container = EtfFormat.Unpack(EtfMemory.FromArray(data));
 
-        private byte[] _outData = null!;
-        private EtfContainer _rData;
+        var dArr = new byte[EtfFormat.GetPackedSize(container)];
 
-        [GlobalSetup]
-        public void Setup()
+        EtfFormat.Pack(container, EtfMemory.FromArray(dArr));
+
+        Console.WriteLine(string.Join(",", dArr));
+        Console.WriteLine(
+            $"Original {data.Length}, Packed {data.Length}. Original == Packed {data.SequenceEqual(dArr)}");
+        Console.WriteLine(container.GetSerializedSize());
+
+        EtfContainer testContainer = new EtfMap
         {
-            _rData = EtfFormat.Unpack(EtfMemory.FromArray(_data));
-            _outData = new byte[_data.Length];
-        }
+            { "a", 1 },
+            {
+                "b", new EtfMap
+                {
+                    { "asdfa", 2 }
+                }
+            }
+        };
 
-        [Benchmark]
-        public int Deserialize()
-        {
-            using EtfContainer unpacked = EtfFormat.Unpack(EtfMemory.FromArray(_data));
-            return unpacked.GetHashCode();
-        }
-
-        [Benchmark]
-        public int Serialize()
-        {
-            EtfFormat.Pack(_rData, EtfMemory.FromArray(_outData));
-            return _outData[0];
-        }
+        Console.WriteLine(testContainer.ToJson());
     }
 }
