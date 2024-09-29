@@ -21,10 +21,10 @@ jobs:
       with:
         dotnet-version: 8.0.x
     - name: Restore dependencies
-      run: dotnet restore
+      run: dotnet restore /p:Configuration="Release"
     - name: Build
-      run: dotnet build --no-restore
+      run: dotnet build --no-restore -c Release
     - name: Test
-      run: dotnet test --no-build --verbosity normal
+      run: dotnet test --no-build --verbosity normal -c Release
     - name: Run Benchmark
-      run: dotnet run --project EtfDotNet.Benchmarks/EtfDotNet.Benchmarks.csproj
+      run: dotnet run --project EtfDotNet.Benchmarks/EtfDotNet.Benchmarks.csproj -c Release
