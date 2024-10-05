@@ -47,7 +47,8 @@ public class EtfTuple : IReadOnlyList<EtfContainer>, IEtfComplex, ITuple
         int size = _array.Length > 255 ? 4 : 1; // uint length (count)
         foreach (EtfContainer container in _array)
         {
-            size += EtfEncoder.CalculateTypeSize(container);
+            int calculatedSize = EtfEncoder.CalculateTypeSize(container);
+            size += calculatedSize;
         }
         return size;
     }

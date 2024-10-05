@@ -4,136 +4,8 @@ using EtfDotNet.Attributes;
 
 namespace EtfDotNet;
 
-public static class EtfSerializer
+public static partial class EtfSerializer
 {
-    private const DynamicallyAccessedMemberTypes DeserializeDynamicallyAccessedMemberTypes =
-        DynamicallyAccessedMemberTypes.PublicProperties | DynamicallyAccessedMemberTypes.PublicFields |
-        DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.Interfaces;
-
-    [RequiresUnreferencedCode("<Pending>")]
-    [RequiresDynamicCode("<Pending>")]
-    public static EtfContainer Serialize<T>(T value)
-    {
-        return Serialize(value, JsonSerializerOptions.Default);
-    }
-
-    [UnconditionalSuppressMessage("AOT", "IL3050", Justification = "<Pending>")]
-    [UnconditionalSuppressMessage("Trimming", "IL2026", Justification = "<Pending>")]
-    public static EtfContainer Serialize<T>(T value, JsonSerializerContext serializerContext)
-    {
-        return Serialize(value, serializerContext.Options);
-    }
-
-    [RequiresUnreferencedCode("<Pending>")]
-    [RequiresDynamicCode("<Pending>")]
-    public static EtfContainer Serialize<T>(T value, JsonSerializerOptions serializerOptions)
-    {
-        if (value is null)
-        {
-            return EtfContainer.FromAtom("nil");
-        }
-
-        switch (value)
-        {
-            case bool vBool:
-                return vBool ? EtfContainer.FromAtom("true") : EtfContainer.FromAtom("false");
-            case int vInt:
-                return vInt;
-            case BigInteger vBigi:
-                return vBigi;
-            case string vStr:
-                return vStr;
-            case byte vByte:
-                return vByte;
-            case double vDbl:
-                return vDbl;
-            case long vLong:
-                return (BigInteger)vLong;
-            case ulong vUlong:
-                return (BigInteger)vUlong;
-            case IConvertible:
-                return JsonSerializer.Serialize(value, serializerOptions).Trim(['"']);
-        }
-
-        Type type = value.GetType();
-        if (type.IsGenericType)
-        {
-            if (value is IDictionary vDict)
-            {
-                var map = new EtfMap();
-                foreach (DictionaryEntry entry in vDict)
-                {
-                    map.Add((Serialize(entry.Key, serializerOptions), Serialize(entry.Value, serializerOptions)));
-                }
-
-                return map;
-            }
-            if (value is IEnumerable vEnu)
-            {
-                var list = new EtfList();
-                foreach (object? item in vEnu)
-                {
-                    list.Add(Serialize(item, serializerOptions));
-                }
-                return list;
-            }
-        }
-
-        if (value is ITuple vTup)
-        {
-            var tup = new EtfTuple((uint)vTup.Length);
-            for (var i = 0; i < vTup.Length; i++)
-            {
-                tup[i] = Serialize(vTup[i], serializerOptions);
-            }
-            return tup;
-        }
-
-        // complex object map type
-        var etfMap = new EtfMap();
-        PropertyInfo[] props = type.GetProperties();
-        FieldInfo[] fields = type.GetFields();
-        foreach (PropertyInfo? propertyInfo in props)
-        {
-            (EtfContainer, EtfContainer)? val = SerializeMember(propertyInfo, propertyInfo.GetValue(value), serializerOptions);
-            if(val.HasValue) etfMap.Add(val.Value);
-        }
-        foreach (FieldInfo? fieldInfo in fields)
-        {
-            (EtfContainer, EtfContainer)? val = SerializeMember(fieldInfo, fieldInfo.GetValue(value), serializerOptions);
-            if(val.HasValue) etfMap.Add(val.Value);
-        }
-
-        return etfMap;
-    }
-
-    [RequiresUnreferencedCode("<Pending>")]
-    [RequiresDynamicCode("<Pending>")]
-    private static (EtfContainer, EtfContainer)? SerializeMember(MemberInfo info, object? value, JsonSerializerOptions serializerOptions)
-    {
-        if (info.GetCustomAttribute<EtfIgnoreAttribute>() is not null) return null;
-        string name = info.Name;
-        var etfName = info.GetCustomAttribute<EtfNameAttribute>();
-        if (etfName is not null)
-        {
-            name = etfName.SerializedName;
-        }
-
-        return (EtfContainer.FromAtom(name), Serialize(value, serializerOptions));
-    }
-
-    private static string? GetMappedMemberName(MemberInfo info)
-    {
-        if (info.GetCustomAttribute<EtfIgnoreAttribute>() is not null) return null;
-        string name = info.Name;
-        var etfName = info.GetCustomAttribute<EtfNameAttribute>();
-        if (etfName is not null)
-        {
-            name = etfName.SerializedName;
-        }
-        return name;
-    }
-    
     [RequiresUnreferencedCode("<Pending>")]
     [RequiresDynamicCode("<Pending>")]
     public static T? Deserialize<[DynamicallyAccessedMembers(DeserializeDynamicallyAccessedMemberTypes)] T>(EtfContainer container)
@@ -390,6 +262,7 @@ public static class EtfSerializer
         throw new EtfException($"Deserializing {container.Type} is not implemented, report this bug.");
     }
 
+    
     private static Type[]? GetEnumerableType([DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.Interfaces)] Type type)
     {
         if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(IEnumerable<>))
@@ -410,6 +283,49 @@ public static class EtfSerializer
         return type.GetInterfaces()
             .FirstOrDefault(x => x.IsGenericType && x.GetGenericTypeDefinition() == typeof(IDictionary<,>))
             ?.GetGenericArguments();
+    }
+    
+    [RequiresUnreferencedCode("<Pending>")]
+    [RequiresDynamicCode("<Pending>")]
+    private static ITuple? ToTuple(EtfTuple tuple, [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] Type t, JsonSerializerOptions serializerOptions)
+    {
+        if (!typeof(ITuple).IsAssignableFrom(t))
+        {
+            throw new EtfException($"Cannot convert EtfTuple to {t}, expected an ITuple or a subclass of it");
+        }
+
+        long len = GetTupleLength(t);
+        if (len != tuple.Length)
+        {
+            throw new EtfException($"Tuple lengths are not the same, expected {tuple.Length} got {len}");
+        }
+
+        var values = new object?[tuple.Length];
+        for (var i = 0; i < values.Length; i++)
+        {
+            int genericIndex = i;
+            Type generic = t.GenericTypeArguments[genericIndex < 8 ? genericIndex : 7];
+            while (genericIndex >= 7)
+            {
+                genericIndex -= 7;
+                generic = generic.GenericTypeArguments[genericIndex < 8 ? genericIndex : 7];
+            }
+            values[i] = Deserialize(tuple[i], generic, serializerOptions);
+        }
+
+        return CreateTuple(t, values, serializerOptions);
+    }
+    
+    private static string? GetMappedMemberName(MemberInfo info)
+    {
+        if (info.GetCustomAttribute<EtfIgnoreAttribute>() is not null) return null;
+        string name = info.Name;
+        var etfName = info.GetCustomAttribute<EtfNameAttribute>();
+        if (etfName is not null)
+        {
+            name = etfName.SerializedName;
+        }
+        return name;
     }
 
     private static long GetTupleLength(Type t)
@@ -441,36 +357,5 @@ public static class EtfSerializer
         }
 
         return (ITuple?)Activator.CreateInstance(t, vals);
-    }
-
-    [RequiresUnreferencedCode("<Pending>")]
-    [RequiresDynamicCode("<Pending>")]
-    private static ITuple? ToTuple(EtfTuple tuple, [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] Type t, JsonSerializerOptions serializerOptions)
-    {
-        if (!typeof(ITuple).IsAssignableFrom(t))
-        {
-            throw new EtfException($"Cannot convert EtfTuple to {t}, expected an ITuple or a subclass of it");
-        }
-
-        long len = GetTupleLength(t);
-        if (len != tuple.Length)
-        {
-            throw new EtfException($"Tuple lengths are not the same, expected {tuple.Length} got {len}");
-        }
-
-        var values = new object?[tuple.Length];
-        for (var i = 0; i < values.Length; i++)
-        {
-            int genericIndex = i;
-            Type generic = t.GenericTypeArguments[genericIndex < 8 ? genericIndex : 7];
-            while (genericIndex >= 7)
-            {
-                genericIndex -= 7;
-                generic = generic.GenericTypeArguments[genericIndex < 8 ? genericIndex : 7];
-            }
-            values[i] = Deserialize(tuple[i], generic, serializerOptions);
-        }
-
-        return CreateTuple(t, values, serializerOptions);
     }
 }

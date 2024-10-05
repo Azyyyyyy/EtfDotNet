@@ -21,8 +21,9 @@ public class EtfMap : List<(EtfContainer, EtfContainer)>, IEtfComplex
         var size = 4; // uint length (count)
         foreach ((EtfContainer, EtfContainer) container in this)
         {
-            size += EtfEncoder.CalculateTypeSize(container.Item1);
-            size += EtfEncoder.CalculateTypeSize(container.Item2);
+            int calculatedSize = EtfEncoder.CalculateTypeSize(container.Item1);
+            calculatedSize += EtfEncoder.CalculateTypeSize(container.Item2);
+            size += calculatedSize;
         }
         return size;
     }

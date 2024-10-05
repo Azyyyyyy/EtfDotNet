@@ -2,36 +2,56 @@ namespace EtfDotNet.Extensions;
 
 public static class JsonNodeExtensions
 {
-    public static EtfContainer ToEtf(this JsonNode? type)
+    public static EtfContainer ToEtf(this JsonNode? type, EtfSerializerOptions options)
     {
         if (type is null)
         {
-            return "nil";
+            return EtfContainer.Nil;
         }
 
         if (type is JsonValue val)
         {
-            if (val.TryGetValue(out bool vBool))
+            JsonValueKind kind = val.GetValueKind();
+            switch (kind)
             {
-                return vBool ? "true" : "false";
+                case JsonValueKind.String:
+                    return Encoding.UTF8.GetBytes(val.GetValue<string>());
+                case JsonValueKind.Number:
+                    break;
+                case JsonValueKind.True:
+                    return EtfContainer.FromAtom("true");
+                case JsonValueKind.False:
+                    return EtfContainer.FromAtom("false");
+                case JsonValueKind.Null:
+                    return EtfContainer.Nil;
+                //Already handled below
+                case JsonValueKind.Object:
+                case JsonValueKind.Array:
+                    break;
+                case JsonValueKind.Undefined:
+                default:
+                    throw new ArgumentOutOfRangeException();
             }
-            if (val.TryGetValue(out string? vString))
-            {
-                return Encoding.UTF8.GetBytes(vString);
-            }
+            
             if (val.TryGetValue(out double vDouble))
             {
+                if (vDouble is >= byte.MinValue and <= byte.MaxValue)
+                    return (byte)vDouble;
+                if (vDouble is >= int.MinValue and <= int.MaxValue)
+                    return (int)vDouble;
+
                 return vDouble;
             }
-            var v = val.GetValue<object>();
-            if (long.TryParse(v.ToString(), out long vLong))
+
+            string v = val.GetValue<object>().ToString() ?? "";
+            if (long.TryParse(v, out long vLong))
             {
-                return vLong switch
-                {
-                    >= byte.MinValue and <= byte.MaxValue => (byte)vLong,
-                    >= int.MinValue and <= int.MaxValue => (int)vLong,
-                    _ => (BigInteger)vLong
-                };
+                if (vLong is >= byte.MinValue and <= byte.MaxValue)
+                    return (byte)vLong;
+                if (vLong is >= int.MinValue and <= int.MaxValue)
+                    return (int)vLong;
+
+                return (BigInteger)vLong;
             }
             throw new EtfException($"Unknown Json value type: {v.GetType()}");
         }
@@ -40,7 +60,7 @@ public static class JsonNodeExtensions
             var list = new EtfList();
             foreach (JsonNode? value in arr)
             {
-                list.Add(ToEtf(value));
+                list.Add(value.ToEtf(options));
             }
             return list;
         }
@@ -49,7 +69,8 @@ public static class JsonNodeExtensions
             var map = new EtfMap();
             foreach ((string? k, JsonNode? v) in obj)
             {
-                map.Add((k, ToEtf(v)));
+                EtfContainer nameContainer = EtfSerializer.GetStringContainer(k, options);
+                map.Add((nameContainer, v.ToEtf(options)));
             }
             return map;
         }

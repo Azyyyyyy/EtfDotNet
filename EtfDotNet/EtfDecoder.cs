@@ -52,7 +52,7 @@ public static class EtfDecoder
             }
             case EtfConstants.VersionNumber:
             default:
-                throw new EtfException($"Unknown type {typeId}");
+                throw new EtfException($"Unknown type '{typeId}'");
         }
     }
 
